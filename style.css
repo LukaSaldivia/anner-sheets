@@ -1,0 +1,232 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap');
+
+:root {
+
+  font-size: 14px;
+
+  /* Colors */
+  --clr-primary-light: hsl(133, 79%, 48%);
+  --clr-primary: hsl(128, 60%, 39%);
+  --clr-primary-dark: hsl(103, 81%, 28%);
+
+  --clr-accent: hsl(192, 91%, 48%);
+
+  --clr-neutral-dark: hsl(147, 43%, 4%);
+  --clr-neutral-dark-light: hsl(144, 80%, 8%);
+
+  --clr-neutral-light: hsl(153, 100%, 98%);
+  --clr-neutral-light-dark: hsl(138, 15%, 80%);
+
+  --clr-available : var(--clr-accent);
+
+
+
+  /* Typography */
+
+  /* https://www.fluid-type-scale.com/calculate */
+
+  --fs-min: clamp(0.8rem, 0.14vi + 0.77rem, 0.89rem);
+  --fs-body: clamp(1rem, 0.19vi + 0.96rem, 1.13rem);
+  --fs-h5: clamp(1.25rem, 0.25vi + 1.19rem, 1.42rem);
+  --fs-h4: clamp(1.56rem, 0.33vi + 1.49rem, 1.79rem);
+  --fs-h3: clamp(1.95rem, 0.44vi + 1.85rem, 2.25rem);
+  --fs-h2: clamp(2.44rem, 0.58vi + 2.31rem, 2.84rem);
+  --fs-h1: clamp(3.05rem, 0.9vi + 2.88rem, 4.57rem);
+
+  --ff: 'Noto Sans', system-ui, sans-serif;
+
+
+}
+
+*,
+::before,
+::after {
+  box-sizing: border-box;
+}
+
+* {
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+  color: inherit;
+  font-size: inherit;
+}
+
+::selection{
+  background-color: var(--clr-accent);
+  color: var(--clr-neutral-dark);
+}
+
+
+html:focus-within {
+  scroll-behavior: smooth;
+}
+
+svg.none{
+  position: absolute;
+  width: 0;
+  height: 0;
+  left: 0;
+}
+
+
+img,
+picture,
+svg {
+  max-width: 100%;
+  display: block;
+}
+
+svg.icon{
+  height: 1.2cap;
+  display: inline;
+  margin-right: .2cap;
+
+  &.fill{
+    fill: currentColor;
+
+    &.primary{
+      fill: var(--clr-primary);
+    }
+  }
+
+  &.stroke{
+    stroke: currentColor;
+
+    &.primary{
+      stroke: var(--clr-primary);
+    }
+  }
+
+
+}
+
+.stack{
+  display: grid;
+  grid-template-areas: "stack";
+  place-items: center;
+
+  > * {
+    grid-area: stack;
+
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body{
+  font-family: var(--ff);
+  background-color: var(--clr-neutral-light);
+  color: var(--clr-neutral-dark);
+  min-height: 100vh;
+
+  --cell-height : 25px;
+  --cell-width : 150px;
+
+}
+
+main{
+
+  display: grid;
+
+  grid-template-columns: [row-count-start] var(--cell-height) [row-count-end table-start] auto [table-end];
+  grid-template-rows: 
+  [column-count-start] var(--cell-height) [column-count-end table-start] auto [table-end];
+
+  &::before{
+    content: '';
+    grid-row: column-count;
+    grid-column: row-count;
+    background-color: var(--clr-neutral-light-dark);
+  }
+
+}
+
+.cell-group{
+  grid-area : table;
+
+  display: grid;
+  grid-template-columns: repeat(var(--columns), var(--cell-width));
+  grid-template-rows: repeat(var(--rows), var(--cell-height));
+
+  > .cell{
+
+    > *{
+      max-height: var(--cell-height);
+      padding-inline: 8px;
+      padding-block: 3px;
+      width: var(--cell-width);
+      height: var(--cell-height);
+      overflow: hidden;
+      line-break: anywhere;
+    }
+  
+    input{
+      opacity: 0;
+      border: none;
+      pointer-events: none;
+  
+      &:focus{
+        opacity: 1;
+        outline: 3px solid var(--clr-accent);
+        z-index: 1;
+      }
+    }
+  
+    div{
+      border: 1px solid var(--clr-neutral-light-dark);
+      text-align: end;
+      text-overflow: ellipsis;
+    }
+  
+  }
+}
+
+
+.column-count{
+  height: var(--cell-height);
+  grid-column: table;
+  grid-row: column-count;
+  display: flex;
+  
+  > .column{
+    background-color: var(--clr-neutral-light-dark);
+    width: var(--cell-width);
+    text-transform: uppercase;
+    text-align: center;
+    display: grid;
+    place-items: center;
+  }
+  
+}
+
+.row-count{
+  grid-row: table;
+  grid-column: row-count;
+
+
+  > .row{
+    background-color: var(--clr-neutral-light-dark);
+    height: var(--cell-height);
+    text-align: center;
+    display: grid;
+    place-items: center;
+  }
+}
