@@ -33,12 +33,57 @@ function COUNT(...args){
 }
 
 function COUNTA(...args){
-  return args.filter(arg => arg !== '').length
+  return args.filter(arg => arg.trim() !== '').length
 }
 
-function IF(condition, ifTrue, ifFalse){
+function IF(condition, ifTrue = 'true', ifFalse = 'false'){
   return condition ? ifTrue : ifFalse
 }
+
+function AND(...args){
+  return args.every(arg => arg)
+}
+
+function OR(...args){
+  return args.some(arg => arg)
+}
+
+function NOT(value){
+  return !value
+}
+
+function LEN(value){
+  return value.length
+}
+
+function LEFT(value, length = 1){
+  return value.slice(0, length)
+}
+
+function RIGHT(value, length = 1){
+  return value.slice(-length)
+}
+
+function MID(value, start = 0, length = 1){
+  return value.slice(start, start + length)
+}
+
+function UPPER(value){
+  return value.toUpperCase()
+}
+
+function LOWER(value){
+  return value.toLowerCase()
+}  
+
+function NOW(){
+  return new Date().toLocaleTimeString()
+}
+
+function TODAY(){
+  return new Date().toLocaleDateString()
+}
+
 
 const PI = Math.PI
 
@@ -87,6 +132,8 @@ class Cell{
 
 
       let cellsInvolved = splitConstants(fn)
+      cellsInvolved = [...new Set(cellsInvolved)]
+      console.log(cellsInvolved)
 
       if (cellsInvolved.length > 0) {
         this.suscribe(cellsInvolved)
@@ -129,6 +176,7 @@ class Cell{
       res = cast
     } catch (error) {
       res = `"${this.value}"`
+      console.log(this.value, res)
     }
 
     return res
@@ -146,11 +194,6 @@ class Cell{
 
   }
   
-
-
-
-  
-
 }
 
 
@@ -181,7 +224,7 @@ cell_group.addEventListener('click', ({target}) => {
   if (!['#ERROR', ''].includes(computed.textContent.trim()))
     return
 
-  useCell(cell)
+  return useCell(cell)
     
 
     
@@ -196,24 +239,27 @@ document.addEventListener('keydown', (e) => {
 
   let nextCell = null
 
-  if (e.key === 'ArrowUp'){
-    nextCell = $(`.cell[data-row="${Math.max(Number(row) - 1,0)}"][data-col="${col}"]`)
+  if (e.ctrlKey) {
+    if (e.key === 'ArrowUp'){
+      nextCell = $(`.cell[data-row="${Math.max(Number(row) - 1,0)}"][data-col="${col}"]`)
+    }
+    if (e.key === 'ArrowDown'){
+      nextCell = $(`.cell[data-row="${Math.min(Number(row) + 1, ROWS - 1)}"][data-col="${col}"]`)
+  
+    }
+    if (e.key === 'ArrowLeft'){
+      nextCell = $(`.cell[data-row="${row}"][data-col="${Math.max(col - 1, 0)}"]`)
+  
+    }
+    if (e.key === 'ArrowRight'){
+      nextCell = $(`.cell[data-row="${row}"][data-col="${Math.min(Number(col) + 1, COLS - 1)}"]`)
+    }
+  
+    if (nextCell) {
+      useCell(nextCell)
+    }
   }
-  if (e.key === 'ArrowDown'){
-    nextCell = $(`.cell[data-row="${Math.min(Number(row) + 1, ROWS - 1)}"][data-col="${col}"]`)
 
-  }
-  if (e.key === 'ArrowLeft'){
-    nextCell = $(`.cell[data-row="${row}"][data-col="${Math.max(col - 1, 0)}"]`)
-
-  }
-  if (e.key === 'ArrowRight'){
-    nextCell = $(`.cell[data-row="${row}"][data-col="${Math.min(Number(col) + 1, COLS - 1)}"]`)
-  }
-
-  if (nextCell) {
-    useCell(nextCell)
-  }
 })
 
 
@@ -265,6 +311,7 @@ for (let i = 0; i < ROWS*COLS; i++) {
 range(COLS, (col) => {
   const column = document.createElement('div')
   column.classList.add('column')
+  column.setAttribute('data-col', col)
   column.textContent = getLetter(col)
   column_count.appendChild(column)
 })
@@ -272,6 +319,7 @@ range(COLS, (col) => {
 range(ROWS, (row) => {
   const row_element = document.createElement('div')
   row_element.classList.add('row')
+  row_element.setAttribute('data-row', row)
   row_element.textContent = row + 1
   row_count.appendChild(row_element)
 })
@@ -288,7 +336,6 @@ function getNumber(letter = 'A') {
 
 
 function getCellsAsConstants(state){
-  // return state.map(row => row.map(cell => `const ${cell.address} = ${cell.getComputed() || 0};`).join('')).join('')
   return Object.values(state).map(cell => `const ${cell.address} = ${cell.getComputed() || '""'};`).join('')
 }
 
@@ -334,22 +381,27 @@ function splitRanges(operation = ''){
   })
 }
 
-// function getRangeValues(range = {}){
-//   return Object.values(range).map(cell => cell.getComputed())
-// }
-
 function useCell(cell){
   const input = _$(cell, 'input')
 
-  const { address } = cell.dataset
+  const { col, row, address } = cell.dataset
   
 
   const end = input.value.length
   input.setSelectionRange(end, end)
   input.focus()
 
+  const column_selected = $(`.column[data-col="${col}"]`)
+  const row_selected = $(`.row[data-row="${row}"]`)
+
+  column_selected.classList.add('selected')
+  row_selected.classList.add('selected')
+
   input.addEventListener('blur', () => {
     let cell = STATE[address]
+
+    column_selected.classList.remove('selected')
+    row_selected.classList.remove('selected')
 
     cell.updateValue(input.value)
 
