@@ -16,6 +16,10 @@ function CLAMP(min, value, max){
   return Math.min(Math.max(value, min), max)
 }
 
+function SUM(...args){
+  return args.reduce((acc, curr) => acc + curr, 0)
+}
+
 const PI = Math.PI
 
 
@@ -40,8 +44,10 @@ class Cell{
     this.suscribers = []
   }
 
-  updateValue(value){
+  updateValue(value, force = false){
 
+
+    if (!force && value === this.value) return
 
     this.value = value
 
@@ -73,11 +79,12 @@ class Cell{
       this.computed = this.value
     }
 
-    STATE[this.row][this.col] = this
+    STATE[this.address] = this
 
 
     this.suscribers.forEach(cell => {
-      cell.updateValue(cell.value)
+      console.log(cell)
+        cell.updateValue(cell.value, true)
     })
 
     this.render.textContent = this.computed
@@ -102,21 +109,16 @@ class Cell{
 
   suscribe(addresses = [String]){
 
-    let cells = STATE.flat().reduce((acc , cell) => {
-
-      acc[cell.address] = cell
-      return acc
-
-    },{})
 
     addresses.forEach(address => {
-      if (cells[address]){
-        cells[address].suscribers.push(this)
+      if (STATE[address] && address !== this.address && !STATE[address].suscribers.includes(this)){
+        STATE[address].suscribers.push(this)
       }
     })
     
 
   }
+  
 
 
 
@@ -136,30 +138,28 @@ cell_group.addEventListener('dblclick', ({target}) => {
 
   if (!cell) return
 
-  const input = _$(cell, 'input')
+  useCell(cell)
 
-  const { row, col } = cell.dataset
   
+})
 
-  const end = input.value.length
-  input.setSelectionRange(end, end)
-  input.focus()
+cell_group.addEventListener('click', ({target}) => {
+  const cell = target.closest('.cell')
 
-  input.addEventListener('blur', () => {
-    let cell = STATE[row][col]
+  if (!cell)
+     return
 
-    cell.updateValue(input.value)
+  const computed = _$(cell, 'div')
 
-  }, { once: true})
+  if (!['#ERROR', ''].includes(computed.textContent))
+    return
 
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === 'Tab' || e.key === 'Escape'){
-      e.preventDefault()
-      input.blur()
-    }
+  useCell(cell)
+    
+
+    
   }
 )
-})
 
 document.addEventListener('keydown', (e) => {
   const activeCell = $('.cell:has(input:focus)')
@@ -168,7 +168,6 @@ document.addEventListener('keydown', (e) => {
   const { row, col } = activeCell.dataset
 
   let nextCell = null
-  let input = null
 
   if (e.key === 'ArrowUp'){
     nextCell = $(`.cell[data-row="${Math.max(Number(row) - 1,0)}"][data-col="${col}"]`)
@@ -186,29 +185,7 @@ document.addEventListener('keydown', (e) => {
   }
 
   if (nextCell) {
-    const { row, col } = nextCell.dataset
-    input = _$(nextCell, 'input')
-    const end = input.value.length
-    input.setSelectionRange(0, end)
-    input.focus()
-
-    input.addEventListener('blur', () => {
-      let cell = STATE[row][col]
-  
-      cell.updateValue(input.value)
-  
-    }, { once: true})
-  
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === 'Tab' || e.key === 'Escape'){
-        e.preventDefault()
-        input.blur()
-      }
-    }
-  )
-
-    
-
+    useCell(nextCell)
   }
 })
 
@@ -235,8 +212,7 @@ range(ROWS, (row) => {
     cell.classList.add('stack')
     cell.setAttribute('data-row', row)
     cell.setAttribute('data-col', col)
-    cell.setAttribute('data-row', row)
-    cell.setAttribute('data-col', col)
+    cell.setAttribute('data-address', `${getLetter(col)}${row + 1}`)
 
     cell.appendChild(document.createElement('div'))
     cell.appendChild(document.createElement('input'))
@@ -246,7 +222,19 @@ range(ROWS, (row) => {
   })
 })
 
-let STATE = range(ROWS, (row) => range(COLS, (col) => new Cell(row, col, $(`.cell[data-row="${row}"][data-col="${col}"] div`))))
+// let STATE = range(ROWS, (row) => range(COLS, (col) => new Cell(row, col, $(`.cell[data-row="${row}"][data-col="${col}"] div`))))
+
+let STATE = {}
+
+for (let i = 0; i < ROWS*COLS; i++) {
+
+  let row = Math.floor(i / COLS)
+  let col = i % COLS
+
+  STATE[`${getLetter(col)}${row + 1}`] = new Cell(row, col, $(`.cell[data-row="${row}"][data-col="${col}"] div`))
+  
+}
+
 
 
 range(COLS, (col) => {
@@ -264,22 +252,85 @@ range(ROWS, (row) => {
 })
 
 function getLetter(num = 0) {
-
   return String.fromCharCode(65 + num)
-  
+}
+
+function getNumber(letter = 'A') {
+  return letter.charCodeAt(0) - 65
 }
 
 
 
 
 function getCellsAsConstants(state){
-  return state.map(row => row.map(cell => `const ${cell.address} = ${cell.getComputed() || 0};`).join('')).join('')
+  // return state.map(row => row.map(cell => `const ${cell.address} = ${cell.getComputed() || 0};`).join('')).join('')
+  return Object.values(state).map(cell => `const ${cell.address} = ${cell.getComputed() || '""'};`).join('')
 }
 
 function splitConstants(operation = ''){
   return operation.split(/[^A-Z0-9]/gm).filter(match => {
     return match.match(/[A-Z][0-9]+/g)
   })
+}
+
+function getRange(range = ''){
+  const [start, end] = range.split(':')
+
+  const [startCol, startRow] = start.match(/[A-Z]+|[0-9]+/g)
+  const [endCol, endRow] = end.match(/[A-Z]+|[0-9]+/g)
+
+  const startColIndex = getNumber(startCol)
+  const endColIndex = getNumber(endCol)
+
+
+  const startRowIndex = Number(startRow) - 1
+  const endRowIndex = Number(endRow) - 1
+
+  const area = (endColIndex - startColIndex + 1) * (endRowIndex - startRowIndex + 1)
+
+
+  const rangeCells = {}
+
+  for(let i = 0; i < area; i++){
+    let row = Math.floor(i / (endColIndex - startColIndex + 1)) + startRowIndex
+    let col = i % (endColIndex - startColIndex + 1) + startColIndex
+
+    rangeCells[`${getLetter(col)}${row + 1}`] = STATE[`${getLetter(col)}${row + 1}`]
+  }
+
+
+
+  return rangeCells
+}
+
+function getRangeValues(range = {}){
+  return Object.values(range).map(cell => cell.getComputed())
+}
+
+function useCell(cell){
+  const input = _$(cell, 'input')
+
+  const { address } = cell.dataset
+  
+
+  const end = input.value.length
+  input.setSelectionRange(end, end)
+  input.focus()
+
+  input.addEventListener('blur', () => {
+    let cell = STATE[address]
+
+    cell.updateValue(input.value)
+
+  }, { once: true})
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === 'Tab' || e.key === 'Escape'){
+      e.preventDefault()
+      input.blur()
+    }
+  }
+)
 }
 
 

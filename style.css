@@ -146,9 +146,12 @@ header{
 
   gap: .25rem;
   padding: 6px 12px;
+  padding-left: var(--cell-height);
+  background-color: var(--clr-primary);
+  color: var(--clr-white-000);
 
   > svg{
-    fill: var(--clr-primary);
+    fill: var(--clr-white-200);
     height: 1.5em;
   }
 }
@@ -230,6 +233,9 @@ main{
     text-align: center;
     display: grid;
     place-items: center;
+    z-index: 1;
+
+    user-select: none;
   }
   
 }
@@ -246,5 +252,10 @@ main{
     text-align: center;
     display: grid;
     place-items: center;
+    z-index: 1;
+
+
+    user-select: none;
+
   }
 }
