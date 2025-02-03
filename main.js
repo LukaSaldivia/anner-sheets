@@ -20,6 +20,26 @@ function SUM(...args){
   return args.reduce((acc, curr) => acc + curr, 0)
 }
 
+function ABS(value){
+  return Math.abs(value)
+}
+
+function ROUND(value, decimals = 0){
+  return Math.round(value * 10 ** decimals) / 10 ** decimals
+}
+
+function COUNT(...args){
+  return args.length
+}
+
+function COUNTA(...args){
+  return args.filter(arg => arg !== '').length
+}
+
+function IF(condition, ifTrue, ifFalse){
+  return condition ? ifTrue : ifFalse
+}
+
 const PI = Math.PI
 
 
@@ -58,6 +78,14 @@ class Cell{
 
       let constants = getCellsAsConstants(STATE)
 
+      let ranges = splitRanges(fn)
+
+      ranges.forEach(range => {
+        let rangeCells = getRange(range)
+        fn = fn.replace(range, rangeCells)
+      })
+
+
       let cellsInvolved = splitConstants(fn)
 
       if (cellsInvolved.length > 0) {
@@ -83,7 +111,6 @@ class Cell{
 
 
     this.suscribers.forEach(cell => {
-      console.log(cell)
         cell.updateValue(cell.value, true)
     })
 
@@ -151,7 +178,7 @@ cell_group.addEventListener('click', ({target}) => {
 
   const computed = _$(cell, 'div')
 
-  if (!['#ERROR', ''].includes(computed.textContent))
+  if (!['#ERROR', ''].includes(computed.textContent.trim()))
     return
 
   useCell(cell)
@@ -222,8 +249,6 @@ range(ROWS, (row) => {
   })
 })
 
-// let STATE = range(ROWS, (row) => range(COLS, (col) => new Cell(row, col, $(`.cell[data-row="${row}"][data-col="${col}"] div`))))
-
 let STATE = {}
 
 for (let i = 0; i < ROWS*COLS; i++) {
@@ -289,23 +314,29 @@ function getRange(range = ''){
   const area = (endColIndex - startColIndex + 1) * (endRowIndex - startRowIndex + 1)
 
 
-  const rangeCells = {}
+
+  const rangeCells = []
 
   for(let i = 0; i < area; i++){
     let row = Math.floor(i / (endColIndex - startColIndex + 1)) + startRowIndex
     let col = i % (endColIndex - startColIndex + 1) + startColIndex
 
-    rangeCells[`${getLetter(col)}${row + 1}`] = STATE[`${getLetter(col)}${row + 1}`]
+    rangeCells.push(`${getLetter(col)}${row + 1}`)
   }
 
 
-
-  return rangeCells
+  return rangeCells.join(',')
 }
 
-function getRangeValues(range = {}){
-  return Object.values(range).map(cell => cell.getComputed())
+function splitRanges(operation = ''){
+  return operation.split(/[^A-Z0-9:]/gm).filter(match => {
+    return match.match(/[A-Z][0-9]+:[A-Z][0-9]+/g)
+  })
 }
+
+// function getRangeValues(range = {}){
+//   return Object.values(range).map(cell => cell.getComputed())
+// }
 
 function useCell(cell){
   const input = _$(cell, 'input')
