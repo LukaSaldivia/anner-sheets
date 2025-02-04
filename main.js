@@ -110,10 +110,10 @@ class Cell{
   }
 
   updateValue(value, force = false){
-    this.render.classList.remove('error')
-
-
+    
+    
     if (!force && value === this.value) return
+    this.render.classList.remove('error')
 
     this.value = value
 
@@ -122,7 +122,7 @@ class Cell{
 
 
       if (fn.includes(this.address)){
-        this.computed = '#INCEPTION'
+        this.computed = '#REF'
         this.render.textContent = this.computed
         this.render.classList.add('error')
       }else{
@@ -228,7 +228,7 @@ cell_group.addEventListener('click', ({target}) => {
 
   const computed = _$(cell, 'div')
 
-  if (!['#ERROR', '', '#INCEPTION'].includes(computed.textContent.trim()))
+  if (!['#ERROR', '', '#REF'].includes(computed.textContent.trim()))
     return
 
   return useCell(cell)

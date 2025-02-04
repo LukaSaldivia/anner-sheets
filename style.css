@@ -212,10 +212,22 @@ main{
       border: 1px solid var(--clr-white-100);
       text-align: end;
       text-overflow: ellipsis;
+      position: relative;
 
       &.error{
-        color: red;
+        text-align: center;
         font-style: italic;
+
+        &::after{
+          content: '';
+          background-color: red;
+          width: var(--cell-height);
+          aspect-ratio: 1;
+          position: absolute;
+          right: calc(var(--cell-height) * -1 / 2);
+          bottom: calc(var(--cell-height) * -1 / 2);
+          rotate: 45deg;
+        }
       }
     }
   
@@ -253,6 +265,7 @@ main{
   grid-column: row-count;
   position: sticky;
   left: 0;
+  z-index: 2;
 
 
   > .row{
