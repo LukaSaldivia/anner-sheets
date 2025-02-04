@@ -99,6 +99,10 @@ const ERRORS = {
   NULLFUNCTION: {
     code: '#NULLFUNCTION',
     message: 'Cell with initialized function, but argument is empty'
+  },
+  NAN: {
+    code: '#NAN',
+    message: 'Some value is not a valid number'
   }
 }
 
@@ -194,6 +198,14 @@ class Cell {
         STATE[this.address] = this
         return
       }else{
+
+        if (isNaN(c)) {
+          let nanError = new Error(ERRORS.NAN.code)
+          this.computed = nanError.message
+          this.renderValue(this.computed, true)
+          STATE[this.address] = this
+          return
+        }
         this.computed = c
         this.renderValue(this.computed)
       }
