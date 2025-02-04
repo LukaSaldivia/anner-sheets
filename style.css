@@ -212,6 +212,11 @@ main{
       border: 1px solid var(--clr-white-100);
       text-align: end;
       text-overflow: ellipsis;
+
+      &.error{
+        color: red;
+        font-style: italic;
+      }
     }
   
   }

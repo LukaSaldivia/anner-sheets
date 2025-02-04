@@ -110,6 +110,7 @@ class Cell{
   }
 
   updateValue(value, force = false){
+    this.render.classList.remove('error')
 
 
     if (!force && value === this.value) return
@@ -120,8 +121,12 @@ class Cell{
       let fn = this.value.slice(1)
 
 
-
-      let constants = getCellsAsConstants(STATE)
+      if (fn.includes(this.address)){
+        this.computed = '#INCEPTION'
+        this.render.textContent = this.computed
+        this.render.classList.add('error')
+      }else{
+        let constants = getCellsAsConstants(STATE)
 
       let ranges = splitRanges(fn)
 
@@ -133,11 +138,11 @@ class Cell{
 
       let cellsInvolved = splitConstants(fn)
       cellsInvolved = [...new Set(cellsInvolved)]
-      console.log(cellsInvolved)
 
       if (cellsInvolved.length > 0) {
         this.suscribe(cellsInvolved)
       }
+
       try {
         let fn_wrapper = new Function('', `
           ${constants}
@@ -145,8 +150,12 @@ class Cell{
         this.computed = fn_wrapper()
       } catch (error) {
         this.computed = '#ERROR'
+        this.render.classList.add('error')
       }
 
+      }
+
+      
 
 
       
@@ -184,14 +193,12 @@ class Cell{
 
   suscribe(addresses = [String]){
 
-
     addresses.forEach(address => {
       if (STATE[address] && address !== this.address && !STATE[address].suscribers.includes(this)){
         STATE[address].suscribers.push(this)
       }
     })
-    
-
+  
   }
   
 }
@@ -221,7 +228,7 @@ cell_group.addEventListener('click', ({target}) => {
 
   const computed = _$(cell, 'div')
 
-  if (!['#ERROR', ''].includes(computed.textContent.trim()))
+  if (!['#ERROR', '', '#INCEPTION'].includes(computed.textContent.trim()))
     return
 
   return useCell(cell)
