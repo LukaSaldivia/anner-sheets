@@ -77,8 +77,6 @@ function LOWER(value) {
 }
 
 function CONCAT(...args){
-  console.log(args)
-  console.log(args.join(''))
   return args.join('')
 }
 
@@ -141,6 +139,7 @@ class Cell {
 
     if (!force && value === this.value) return
     this.render.classList.remove('error')
+    this.render.setAttribute('title', '')
 
     this.value = value
 
@@ -199,7 +198,6 @@ class Cell {
           ${constants}
           return ${fn}`)
 
-        console.log(fn_wrapper)
         return fn_wrapper()
       }, ERRORS.VALUES.code)
 
@@ -210,12 +208,12 @@ class Cell {
         return
       }else{
 
-        if (isNaN(c)) {
-          // let nanError = new Error(ERRORS.NAN.code)
-          // this.computed = nanError.message
-          // this.renderValue(this.computed, true)
-          // STATE[this.address] = this
-          // return
+        if (typeof c == "number" && Number.isNaN(c)) {
+          let nanError = new Error(ERRORS.NAN.code)
+          this.computed = nanError.message
+          this.renderValue(this.computed, true)
+          STATE[this.address] = this
+          return
         }
         this.computed = c
         this.renderValue(this.computed)
