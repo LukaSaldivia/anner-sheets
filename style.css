@@ -209,9 +209,14 @@ main{
     }
   
     div{
+      max-height: var(--cell-height);
       border: 1px solid var(--clr-white-100);
+      
       text-align: end;
+      white-space: nowrap; 
+      overflow: hidden;
       text-overflow: ellipsis;
+       
       position: relative;
 
       &.error{

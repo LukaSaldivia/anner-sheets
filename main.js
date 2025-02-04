@@ -96,9 +96,9 @@ const ERRORS = {
     code: '#REF',
     message: 'Auto reference error'
   },
-  VALUES: {
-    code: '#VALUES',
-    message: 'Some value is not valid'
+  SYNTAX: {
+    code: '#SYNTAX',
+    message: 'There is an error in the function´s syntax'
   },
   NULLFUNCTION: {
     code: '#NULLFUNCTION',
@@ -193,16 +193,16 @@ class Cell {
 
 
       
-      let [valueError, c = value] = handleError(() => {
+      let [syntaxError, c = value] = handleError(() => {
         let fn_wrapper = new Function('', `
           ${constants}
           return ${fn}`)
 
         return fn_wrapper()
-      }, ERRORS.VALUES.code)
+      }, ERRORS.SYNTAX.code)
 
-      if (valueError) {
-        this.computed = valueError.message
+      if (syntaxError) {
+        this.computed = syntaxError.message
         this.renderValue(this.computed, true)
         STATE[this.address] = this
         return
