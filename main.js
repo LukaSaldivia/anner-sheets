@@ -1,91 +1,108 @@
 // ----- Excel Related functions and variables -----
 
-function MAX(...args){
+function MAX(...args) {
   return Math.max(...args)
 }
 
-function MIN(...args){
+function MIN(...args) {
   return Math.min(...args)
 }
 
-function AVG(...args){
+function AVG(...args) {
   return args.reduce((acc, curr) => acc + curr, 0) / args.length
 }
 
-function CLAMP(min, value, max){
+function CLAMP(min, value, max) {
   return Math.min(Math.max(value, min), max)
 }
 
-function SUM(...args){
-  return args.reduce((acc, curr) => acc + curr, 0)
+function SUM(...args) {
+  return args.reduce((acc, curr) => Number(acc) + Number(curr), 0)
 }
 
-function ABS(value){
+function ABS(value) {
   return Math.abs(value)
 }
 
-function ROUND(value, decimals = 0){
+function ROUND(value, decimals = 0) {
   return Math.round(value * 10 ** decimals) / 10 ** decimals
 }
 
-function COUNT(...args){
+function COUNT(...args) {
   return args.length
 }
 
-function COUNTA(...args){
+function COUNTA(...args) {
   return args.filter(arg => arg.trim() !== '').length
 }
 
-function IF(condition, ifTrue = 'true', ifFalse = 'false'){
+function IF(condition, ifTrue = 'true', ifFalse = 'false') {
   return condition ? ifTrue : ifFalse
 }
 
-function AND(...args){
+function AND(...args) {
   return args.every(arg => arg)
 }
 
-function OR(...args){
+function OR(...args) {
   return args.some(arg => arg)
 }
 
-function NOT(value){
+function NOT(value) {
   return !value
 }
 
-function LEN(value){
+function LEN(value) {
   return value.length
 }
 
-function LEFT(value, length = 1){
+function LEFT(value, length = 1) {
   return value.slice(0, length)
 }
 
-function RIGHT(value, length = 1){
+function RIGHT(value, length = 1) {
   return value.slice(-length)
 }
 
-function MID(value, start = 0, length = 1){
+function MID(value, start = 0, length = 1) {
   return value.slice(start, start + length)
 }
 
-function UPPER(value){
+function UPPER(value) {
   return value.toUpperCase()
 }
 
-function LOWER(value){
+function LOWER(value) {
   return value.toLowerCase()
-}  
+}
 
-function NOW(){
+function NOW() {
   return new Date().toLocaleTimeString()
 }
 
-function TODAY(){
+function TODAY() {
   return new Date().toLocaleDateString()
 }
 
 
 const PI = Math.PI
+
+const ERRORS = {
+  REF: {
+    code: '#REF',
+    message: 'Auto reference error'
+  },
+  VALUES: {
+    code: '#VALUES',
+    message: 'Some value is not valid'
+  },
+  NULLFUNCTION: {
+    code: '#NULLFUNCTION',
+    message: 'Cell with initialized function, but argument is empty'
+  }
+}
+
+
 
 
 
@@ -97,8 +114,8 @@ const _$ = (element = HTMLElement, selector = '') => element.querySelector(selec
 const $$ = (selector = '') => document.querySelectorAll(selector)
 const _$$ = (element = HTMLElement, selector = '') => element.querySelectorAll(selector)
 
-class Cell{
-  constructor(row, col, render){
+class Cell {
+  constructor(row, col, render) {
     this.row = row
     this.col = col
     this.value = ''
@@ -109,24 +126,45 @@ class Cell{
     this.suscribers = []
   }
 
-  updateValue(value, force = false){
-    
-    
+  updateValue(value, force = false) {
+
+
     if (!force && value === this.value) return
     this.render.classList.remove('error')
 
     this.value = value
 
-    if (this.value.startsWith('=')){
+    if (this.value.startsWith('=')) {
       let fn = this.value.slice(1)
 
+      let [nullFnError, a = value] = handleError(() => {
+        if (fn.trim() === '') {
+          throw new Error(ERRORS.NULLFUNCTION.code)
+        }
+      }, ERRORS.NULLFUNCTION.code)
 
-      if (fn.includes(this.address)){
-        this.computed = '#REF'
-        this.render.textContent = this.computed
-        this.render.classList.add('error')
-      }else{
-        let constants = getCellsAsConstants(STATE)
+      if (nullFnError) {
+        this.computed = nullFnError.message
+        this.renderValue(this.computed, true)
+        STATE[this.address] = this
+        return
+        
+      }
+
+      let [refError, b = value] = handleError(() => {
+        if (fn.includes(this.address)) {
+          throw new Error(ERRORS.REF.code)
+        }
+      }, ERRORS.REF.code)
+
+      if (refError) {
+        this.computed = refError.message
+        this.renderValue(this.computed, true)
+        STATE[this.address] = this
+        return
+      }
+      
+      let constants = getCellsAsConstants(STATE)
 
       let ranges = splitRanges(fn)
 
@@ -142,65 +180,70 @@ class Cell{
       if (cellsInvolved.length > 0) {
         this.suscribe(cellsInvolved)
       }
-
-      try {
+      
+      let [valueError, c = value] = handleError(() => {
         let fn_wrapper = new Function('', `
           ${constants}
           return ${fn}`)
-        this.computed = fn_wrapper()
-      } catch (error) {
-        this.computed = '#ERROR'
-        this.render.classList.add('error')
+        return fn_wrapper()
+      }, ERRORS.VALUES.code)
+
+      if (valueError) {
+        this.computed = valueError.message
+        this.renderValue(this.computed, true)
+        STATE[this.address] = this
+        return
+      }else{
+        this.computed = c
+        this.renderValue(this.computed)
       }
 
-      }
-
-      
-
-
-      
-    }else{
+    } else {
       this.computed = this.value
+      this.renderValue(this.computed)
+      STATE[this.address] = this
     }
 
-    STATE[this.address] = this
-
-
     this.suscribers.forEach(cell => {
-        cell.updateValue(cell.value, true)
+      cell.updateValue(cell.value, true)
     })
-
-    this.render.textContent = this.computed
 
   }
 
-  getComputed(){
+  getComputed() {
     let res = this.computed
     try {
       let cast = Number(res)
-      if (isNaN(cast)){
+      if (isNaN(cast)) {
         throw new Error('Invalid number')
-        
+
       }
       res = cast
     } catch (error) {
       res = `"${this.value}"`
-      console.log(this.value, res)
     }
 
     return res
   }
 
-  suscribe(addresses = [String]){
+  suscribe(addresses = [String]) {
 
     addresses.forEach(address => {
-      if (STATE[address] && address !== this.address && !STATE[address].suscribers.includes(this)){
+      if (STATE[address] && address !== this.address && !STATE[address].suscribers.includes(this)) {
         STATE[address].suscribers.push(this)
       }
     })
-  
+
   }
-  
+
+  renderValue(value = '', error = false){
+    if (error) {
+      this.render.classList.add('error')
+      this.render.setAttribute('title', ERRORS[value.substring(1)].message)
+    }
+    this.render.textContent = value
+  }
+
 }
 
 
@@ -209,7 +252,7 @@ const cell_group = $('.cell-group')
 const column_count = $('.column-count')
 const row_count = $('.row-count')
 
-cell_group.addEventListener('dblclick', ({target}) => {
+cell_group.addEventListener('dblclick', ({ target }) => {
 
   const cell = target.closest('.cell')
 
@@ -217,25 +260,25 @@ cell_group.addEventListener('dblclick', ({target}) => {
 
   useCell(cell)
 
-  
+
 })
 
-cell_group.addEventListener('click', ({target}) => {
+cell_group.addEventListener('click', ({ target }) => {
   const cell = target.closest('.cell')
 
   if (!cell)
-     return
+    return
 
   const computed = _$(cell, 'div')
 
-  if (!['#ERROR', '', '#REF'].includes(computed.textContent.trim()))
+  if (![...getErrorsCode(), ''].includes(computed.textContent.trim()))
     return
 
   return useCell(cell)
-    
 
-    
-  }
+
+
+}
 )
 
 document.addEventListener('keydown', (e) => {
@@ -247,21 +290,21 @@ document.addEventListener('keydown', (e) => {
   let nextCell = null
 
   if (e.ctrlKey) {
-    if (e.key === 'ArrowUp'){
-      nextCell = $(`.cell[data-row="${Math.max(Number(row) - 1,0)}"][data-col="${col}"]`)
+    if (e.key === 'ArrowUp') {
+      nextCell = $(`.cell[data-row="${Math.max(Number(row) - 1, 0)}"][data-col="${col}"]`)
     }
-    if (e.key === 'ArrowDown'){
+    if (e.key === 'ArrowDown') {
       nextCell = $(`.cell[data-row="${Math.min(Number(row) + 1, ROWS - 1)}"][data-col="${col}"]`)
-  
+
     }
-    if (e.key === 'ArrowLeft'){
+    if (e.key === 'ArrowLeft') {
       nextCell = $(`.cell[data-row="${row}"][data-col="${Math.max(col - 1, 0)}"]`)
-  
+
     }
-    if (e.key === 'ArrowRight'){
+    if (e.key === 'ArrowRight') {
       nextCell = $(`.cell[data-row="${row}"][data-col="${Math.min(Number(col) + 1, COLS - 1)}"]`)
     }
-  
+
     if (nextCell) {
       useCell(nextCell)
     }
@@ -269,9 +312,19 @@ document.addEventListener('keydown', (e) => {
 
 })
 
+document.addEventListener('focusin', ({ target }) => {
+  if (target.tagName === 'INPUT') {
+    const cell = target.closest('.cell')
 
-  
-  
+    if (!cell) return
+    
+    useCell(cell)
+  }
+})
+
+
+
+
 
 
 
@@ -297,20 +350,20 @@ range(ROWS, (row) => {
     cell.appendChild(document.createElement('div'))
     cell.appendChild(document.createElement('input'))
 
-    
+
     cell_group.appendChild(cell)
   })
 })
 
 let STATE = {}
 
-for (let i = 0; i < ROWS*COLS; i++) {
+for (let i = 0; i < ROWS * COLS; i++) {
 
   let row = Math.floor(i / COLS)
   let col = i % COLS
 
   STATE[`${getLetter(col)}${row + 1}`] = new Cell(row, col, $(`.cell[data-row="${row}"][data-col="${col}"] div`))
-  
+
 }
 
 
@@ -342,17 +395,17 @@ function getNumber(letter = 'A') {
 
 
 
-function getCellsAsConstants(state){
+function getCellsAsConstants(state) {
   return Object.values(state).map(cell => `const ${cell.address} = ${cell.getComputed() || '""'};`).join('')
 }
 
-function splitConstants(operation = ''){
+function splitConstants(operation = '') {
   return operation.split(/[^A-Z0-9]/gm).filter(match => {
     return match.match(/[A-Z][0-9]+/g)
   })
 }
 
-function getRange(range = ''){
+function getRange(range = '') {
   const [start, end] = range.split(':')
 
   const [startCol, startRow] = start.match(/[A-Z]+|[0-9]+/g)
@@ -371,7 +424,7 @@ function getRange(range = ''){
 
   const rangeCells = []
 
-  for(let i = 0; i < area; i++){
+  for (let i = 0; i < area; i++) {
     let row = Math.floor(i / (endColIndex - startColIndex + 1)) + startRowIndex
     let col = i % (endColIndex - startColIndex + 1) + startColIndex
 
@@ -382,17 +435,17 @@ function getRange(range = ''){
   return rangeCells.join(',')
 }
 
-function splitRanges(operation = ''){
+function splitRanges(operation = '') {
   return operation.split(/[^A-Z0-9:]/gm).filter(match => {
     return match.match(/[A-Z][0-9]+:[A-Z][0-9]+/g)
   })
 }
 
-function useCell(cell){
+function useCell(cell) {
   const input = _$(cell, 'input')
 
   const { col, row, address } = cell.dataset
-  
+
 
   const end = input.value.length
   input.setSelectionRange(end, end)
@@ -412,16 +465,37 @@ function useCell(cell){
 
     cell.updateValue(input.value)
 
-  }, { once: true})
+  }, { once: true })
 
   input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === 'Tab' || e.key === 'Escape'){
+    if (e.key === 'Enter') {
       e.preventDefault()
-      input.blur()
+      
+      let belowCell = $(`.cell[data-row="${Number(row) + 1}"][data-col="${col}"]`)
+      if (!belowCell)
+        return input.blur()
+      
+      return useCell(belowCell)
+    }
+    
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      return input.blur()
     }
   }
-)
+  )
 }
 
+function getErrorsCode() {
+  return Object.values(ERRORS).reduce((acc, error) => [...acc, error.code], [])
+}
+
+function handleError(cb, err = '') {
+  try {
+    return [null, cb()]
+  } catch(e) {
+    return [new Error(err), null]
+  }
+}
 
 
