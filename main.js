@@ -76,6 +76,12 @@ function LOWER(value) {
   return value.toLowerCase()
 }
 
+function CONCAT(...args){
+  console.log(args)
+  console.log(args.join(''))
+  return args.join('')
+}
+
 function NOW() {
   return new Date().toLocaleTimeString()
 }
@@ -168,8 +174,6 @@ class Cell {
         return
       }
       
-      let constants = getCellsAsConstants(STATE)
-
       let ranges = splitRanges(fn)
 
       ranges.forEach(range => {
@@ -177,18 +181,25 @@ class Cell {
         fn = fn.replace(range, rangeCells)
       })
 
-
       let cellsInvolved = splitConstants(fn)
       cellsInvolved = [...new Set(cellsInvolved)]
 
       if (cellsInvolved.length > 0) {
         this.suscribe(cellsInvolved)
       }
+
+      let constants = getCellsAsConstants(cellsInvolved)
+
+
+
+
       
       let [valueError, c = value] = handleError(() => {
         let fn_wrapper = new Function('', `
           ${constants}
           return ${fn}`)
+
+        console.log(fn_wrapper)
         return fn_wrapper()
       }, ERRORS.VALUES.code)
 
@@ -200,11 +211,11 @@ class Cell {
       }else{
 
         if (isNaN(c)) {
-          let nanError = new Error(ERRORS.NAN.code)
-          this.computed = nanError.message
-          this.renderValue(this.computed, true)
-          STATE[this.address] = this
-          return
+          // let nanError = new Error(ERRORS.NAN.code)
+          // this.computed = nanError.message
+          // this.renderValue(this.computed, true)
+          // STATE[this.address] = this
+          // return
         }
         this.computed = c
         this.renderValue(this.computed)
@@ -228,11 +239,10 @@ class Cell {
       let cast = Number(res)
       if (isNaN(cast)) {
         throw new Error('Invalid number')
-
       }
       res = cast
     } catch (error) {
-      res = `"${this.value}"`
+      res = `"${this.computed}"`
     }
 
     return res
@@ -407,8 +417,8 @@ function getNumber(letter = 'A') {
 
 
 
-function getCellsAsConstants(state) {
-  return Object.values(state).map(cell => `const ${cell.address} = ${cell.getComputed() || '""'};`).join('')
+function getCellsAsConstants(cells = []) {
+  return cells.map(cell => `const ${cell} = ${STATE[cell].getComputed()};`).join('')
 }
 
 function splitConstants(operation = '') {
