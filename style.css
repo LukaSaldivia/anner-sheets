@@ -12,6 +12,7 @@
   --clr-accent: #0b57d0;
 
   --clr-black-900: #000029;
+  --clr-black-500: #4F5251;
 
   --clr-white-000: #F9FBFD;
   --clr-white-100: #ececec;
@@ -76,24 +77,6 @@ svg {
   display: block;
 }
 
-svg.icon{
-  display: inline;
-  margin-right: .2cap;
-
-  &.fill{
-    fill: currentColor;
-  }
-
-  &.stroke{
-    stroke: currentColor;
-
-    &.primary{
-      stroke: var(--clr-primary);
-    }
-  }
-
-
-}
 
 .stack{
   display: grid;
@@ -144,15 +127,66 @@ header{
   display: flex;
   align-items: center;
 
-  gap: .25rem;
-  padding: 6px 12px;
-  padding-left: var(--cell-height);
-  background-color: var(--clr-primary);
-  color: var(--clr-white-000);
+  gap: 2px;
+  padding: 12px;
+  background-color: var(--clr-white-000);
+  color: var(--clr-black-900);
 
-  > svg{
-    fill: var(--clr-white-200);
-    height: 1.5em;
+  .principal-icon{
+
+    fill: var(--clr-primary);
+    width: 40px;
+  
+  }
+
+  .content{
+    display: grid;
+    align-items: center;
+    justify-items: start;
+    grid-template-rows: repeat(2,auto);
+
+    .upper,.lower{
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .upper{
+      p[contenteditable]{
+        grid-row: 1;
+        box-sizing: content-box;
+        padding: 4px;
+        padding-right: 8px;
+        font-size: 18px;
+        border-radius: 4px;
+        color: var(--clr-black-500);
+  
+        &:focus{
+          outline: 1px solid var(--clr-white-200);
+        }
+      }
+  
+      .out-links{
+        display: flex;
+        color: var(--clr-black-500);
+        gap: 12px;
+        svg{
+          width: 20px;
+        }
+        .stroke{
+          stroke: currentColor;
+        }
+
+        .fill{
+          fill: currentColor;
+        }
+      }
+    }
+
+    .lower{
+      padding-left: 4px;
+    }
+
   }
 }
 
@@ -233,6 +267,27 @@ main{
           bottom: calc(var(--cell-height) * -1 / 2);
           rotate: 45deg;
         }
+
+        &::before{
+          background-color: var(--clr-white-200);
+
+          content: 'Error: 'attr(title);
+          position: fixed;
+          bottom: 0;
+          left: var(--cell-height);
+          border-top: 5px solid var(--clr-white-100);
+          border-right: 5px solid var(--clr-white-100);
+
+          padding: 10px;
+
+          pointer-events: none;
+          z-index: 2;
+          visibility: hidden;
+        }
+
+        &:hover::before{
+          visibility: visible;
+        }
       }
     }
   
@@ -291,3 +346,4 @@ main{
 :is(.row,.column).selected{
   background-color: var(--clr-white-200);
 }
+

@@ -518,4 +518,8 @@ function handleError(cb, err = '') {
   }
 }
 
-
+$("p[contenteditable]").addEventListener('keydown', ({key, preventDefault}) => {
+  if (key == "Enter") {
+    $("p[contenteditable]").blur()
+  }
+})
