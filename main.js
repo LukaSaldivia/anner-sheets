@@ -122,6 +122,9 @@ const _$ = (element = HTMLElement, selector = '') => element.querySelector(selec
 const $$ = (selector = '') => document.querySelectorAll(selector)
 const _$$ = (element = HTMLElement, selector = '') => element.querySelectorAll(selector)
 
+const range = (length, cb) => Array.from({ length }, (_, i) => i).map(cb)
+
+
 class Cell {
   constructor(row, col, render) {
     this.row = row
@@ -273,6 +276,14 @@ const cell_group = $('.cell-group')
 const column_count = $('.column-count')
 const row_count = $('.row-count')
 
+const ROWS = 100
+const COLS = 26
+
+cell_group.setAttribute('style', `--columns : ${COLS}; --rows : ${ROWS}`)
+
+
+// Event-Listeners
+
 cell_group.addEventListener('dblclick', ({ target }) => {
 
   const cell = target.closest('.cell')
@@ -281,29 +292,32 @@ cell_group.addEventListener('dblclick', ({ target }) => {
 
   useCell(cell)
 
-
 })
 
 cell_group.addEventListener('click', ({ target }) => {
+
+  $$('.cell div.focus').forEach(div => div.classList.remove('focus'))
+
   const cell = target.closest('.cell')
 
-  if (!cell)
-    return
+  if (!cell) return
 
   const computed = _$(cell, 'div')
-
-  if (![...getErrorsCode(), ''].includes(computed.textContent.trim()))
+  
+  if (![...getErrorsCode(), ''].includes(computed.textContent.trim())){
+    computed.classList.add('focus')
     return
-
+  }
+  
   return useCell(cell)
-
-
 
 }
 )
 
 document.addEventListener('keydown', (e) => {
+
   const activeCell = $('.cell:has(input:focus)')
+
   if (!activeCell) return
 
   const { row, col } = activeCell.dataset
@@ -334,30 +348,23 @@ document.addEventListener('keydown', (e) => {
 })
 
 document.addEventListener('focusin', ({ target }) => {
+
   if (target.tagName === 'INPUT') {
     const cell = target.closest('.cell')
-
     if (!cell) return
     
     useCell(cell)
   }
 })
 
+$("p[contenteditable]").addEventListener('keydown', ({key}) => {
+  if (key == "Enter") {
+    $("p[contenteditable]").blur()
+  }
+})
 
 
-
-
-
-
-
-const ROWS = 100
-const COLS = 26
-
-const range = (length, cb) => Array.from({ length }, (_, i) => i).map(cb)
-
-
-
-cell_group.setAttribute('style', `--columns : ${COLS}; --rows : ${ROWS}`)
+// Sheet creation
 
 range(ROWS, (row) => {
   range(COLS, (col) => {
@@ -376,6 +383,8 @@ range(ROWS, (row) => {
   })
 })
 
+// Cells creation
+
 let STATE = {}
 
 for (let i = 0; i < ROWS * COLS; i++) {
@@ -387,7 +396,7 @@ for (let i = 0; i < ROWS * COLS; i++) {
 
 }
 
-
+// Column-count creation
 
 range(COLS, (col) => {
   const column = document.createElement('div')
@@ -397,6 +406,8 @@ range(COLS, (col) => {
   column_count.appendChild(column)
 })
 
+// Row-count creation
+
 range(ROWS, (row) => {
   const row_element = document.createElement('div')
   row_element.classList.add('row')
@@ -404,6 +415,10 @@ range(ROWS, (row) => {
   row_element.textContent = row + 1
   row_count.appendChild(row_element)
 })
+
+
+
+// Functions
 
 function getLetter(num = 0) {
   return String.fromCharCode(65 + num)
@@ -413,17 +428,8 @@ function getNumber(letter = 'A') {
   return letter.charCodeAt(0) - 65
 }
 
-
-
-
 function getCellsAsConstants(cells = []) {
   return cells.map(cell => `const ${cell} = ${STATE[cell].getComputed()};`).join('')
-}
-
-function splitConstants(operation = '') {
-  return operation.split(/[^A-Z0-9]/g).filter(match => {
-    return match.match(/[A-Z][0-9]+/g)
-  })
 }
 
 function getRange(range = '') {
@@ -456,11 +462,26 @@ function getRange(range = '') {
   return Object.keys(rangeCells).join(',')
 }
 
+function getErrorsCode() {
+  return Object.values(ERRORS).reduce((acc, error) => [...acc, error.code], [])
+}
+
+
+
+function splitConstants(operation = '') {
+  return operation.split(/[^A-Z0-9]/g).filter(match => {
+    return match.match(/[A-Z][0-9]+/g)
+  })
+}
+
 function splitRanges(operation = '') {
   return operation.split(/[^A-Z0-9:]/g).filter(match => {
     return match.match(/[A-Z][0-9]+:[A-Z][0-9]+/g)
   })
 }
+
+
+
 
 function useCell(cell) {
   const input = _$(cell, 'input')
@@ -525,18 +546,6 @@ function useCell(cell) {
   )
 }
 
-function getErrorsCode() {
-  return Object.values(ERRORS).reduce((acc, error) => [...acc, error.code], [])
-}
-
-function handleError(cb, err = '') {
-  try {
-    return [null, cb()]
-  } catch(e) {
-    return [new Error(err), null]
-  }
-}
-
 function highlightSelectedCells({value}){
   $$('.cell:has(div.selected) .selected').forEach( selected => selected.classList.remove('selected'))
 
@@ -562,9 +571,10 @@ function highlightSelectedCells({value}){
 }
 
 
-
-$("p[contenteditable]").addEventListener('keydown', ({key}) => {
-  if (key == "Enter") {
-    $("p[contenteditable]").blur()
+function handleError(cb, err = '') {
+  try {
+    return [null, cb()]
+  } catch(e) {
+    return [new Error(err), null]
   }
-})
+}

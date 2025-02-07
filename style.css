@@ -293,6 +293,11 @@ main{
           visibility: visible;
         }
       }
+
+      &.focus{
+        background-color: var(--clr-white-100);
+        z-index: 2;
+      }
     }
 
     &.writing-function{
