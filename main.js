@@ -664,10 +664,10 @@ function highlightSelectedCells({ value }) {
 }
 
 
-function handleError(cb, err = '') {
+function handleError(cb, errCode = '') {
   try {
     return [null, cb()]
   } catch (e) {
-    return [new Error(err), null]
+    return [new Error(errCode), null]
   }
 }
