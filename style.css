@@ -21,6 +21,8 @@
 
 
 
+
+
   /* Typography */
 
   /* https://www.fluid-type-scale.com/calculate */
@@ -131,6 +133,7 @@ header{
   padding: 12px;
   background-color: var(--clr-white-000);
   color: var(--clr-black-900);
+  height: 75px;
 
   .principal-icon{
 
@@ -238,7 +241,7 @@ main{
         opacity: 1;
         outline: 2px solid var(--clr-accent);
         background-color: var(--clr-white-000);
-        z-index: 1;
+        z-index: 2;
       }
     }
   
@@ -250,9 +253,9 @@ main{
       white-space: nowrap; 
       overflow: hidden;
       text-overflow: ellipsis;
-       
-      position: relative;
 
+      position: relative;
+       
       &.error{
         text-align: center;
         font-style: italic;
@@ -266,6 +269,7 @@ main{
           right: calc(var(--cell-height) * -1 / 2);
           bottom: calc(var(--cell-height) * -1 / 2);
           rotate: 45deg;
+          z-index: 1;
         }
 
         &::before{
@@ -289,6 +293,21 @@ main{
           visibility: visible;
         }
       }
+    }
+
+    &.writing-function{
+      input{
+        outline: 2px dashed var(--clr-accent);
+        
+      }
+    }
+
+    &:has(div.selected) .selected{
+
+        background-color: #fff16e;
+        background-size: 5px 5px;
+        background-image: repeating-linear-gradient(45deg, #f3eca8 0, #f3eca8 1px, #fff16e 0, #fff16e 50%);   
+        border-color: #ffe135;   
     }
   
   }

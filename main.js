@@ -131,10 +131,10 @@ class Cell {
     this.address = `${getLetter(col)}${row + 1}`
     this.render = render
 
-    this.suscribers = []
+    this.suscribers = {}
   }
 
-  updateValue(value, force = false) {
+  updateValue(value, force = false, parentAddress = '') {
 
 
     if (!force && value === this.value) return
@@ -155,7 +155,6 @@ class Cell {
       if (nullFnError) {
         this.computed = nullFnError.message
         this.renderValue(this.computed, true)
-        STATE[this.address] = this
         return
         
       }
@@ -169,7 +168,6 @@ class Cell {
       if (refError) {
         this.computed = refError.message
         this.renderValue(this.computed, true)
-        STATE[this.address] = this
         return
       }
       
@@ -185,6 +183,10 @@ class Cell {
 
       if (cellsInvolved.length > 0) {
         this.suscribe(cellsInvolved)
+      }
+
+      if (force && !cellsInvolved.includes(parentAddress)) {
+        delete STATE[parentAddress].suscribers[this.address]
       }
 
       let constants = getCellsAsConstants(cellsInvolved)
@@ -204,7 +206,6 @@ class Cell {
       if (syntaxError) {
         this.computed = syntaxError.message
         this.renderValue(this.computed, true)
-        STATE[this.address] = this
         return
       }else{
 
@@ -212,7 +213,6 @@ class Cell {
           let nanError = new Error(ERRORS.NAN.code)
           this.computed = nanError.message
           this.renderValue(this.computed, true)
-          STATE[this.address] = this
           return
         }
         this.computed = c
@@ -222,12 +222,13 @@ class Cell {
     } else {
       this.computed = this.value
       this.renderValue(this.computed)
-      STATE[this.address] = this
     }
 
-    this.suscribers.forEach(cell => {
-      cell.updateValue(cell.value, true)
-    })
+
+    for (const suscriberAddress in this.suscribers) {
+      const suscriber = this.suscribers[suscriberAddress]
+      suscriber.updateValue(suscriber.value, true, this.address)
+    }
 
   }
 
@@ -249,8 +250,8 @@ class Cell {
   suscribe(addresses = [String]) {
 
     addresses.forEach(address => {
-      if (STATE[address] && address !== this.address && !STATE[address].suscribers.includes(this)) {
-        STATE[address].suscribers.push(this)
+      if (address !== this.address) {
+        STATE[address].suscribers[this.address] = this
       }
     })
 
@@ -420,7 +421,7 @@ function getCellsAsConstants(cells = []) {
 }
 
 function splitConstants(operation = '') {
-  return operation.split(/[^A-Z0-9]/gm).filter(match => {
+  return operation.split(/[^A-Z0-9]/g).filter(match => {
     return match.match(/[A-Z][0-9]+/g)
   })
 }
@@ -442,21 +443,21 @@ function getRange(range = '') {
 
 
 
-  const rangeCells = []
+  const rangeCells = {}
 
   for (let i = 0; i < area; i++) {
     let row = Math.floor(i / (endColIndex - startColIndex + 1)) + startRowIndex
     let col = i % (endColIndex - startColIndex + 1) + startColIndex
 
-    rangeCells.push(`${getLetter(col)}${row + 1}`)
+    rangeCells[`${getLetter(col)}${row + 1}`] = 1
   }
 
 
-  return rangeCells.join(',')
+  return Object.keys(rangeCells).join(',')
 }
 
 function splitRanges(operation = '') {
-  return operation.split(/[^A-Z0-9:]/gm).filter(match => {
+  return operation.split(/[^A-Z0-9:]/g).filter(match => {
     return match.match(/[A-Z][0-9]+:[A-Z][0-9]+/g)
   })
 }
@@ -479,6 +480,8 @@ function useCell(cell) {
 
   input.addEventListener('blur', () => {
     let cell = STATE[address]
+    $$('.cell:has(div.selected) .selected').forEach( selected => selected.classList.remove('selected'))
+
 
     column_selected.classList.remove('selected')
     row_selected.classList.remove('selected')
@@ -486,6 +489,21 @@ function useCell(cell) {
     cell.updateValue(input.value)
 
   }, { once: true })
+
+  input.addEventListener('input', () => {
+    cell.classList.toggle('writing-function', input.value.startsWith('='))
+
+    highlightSelectedCells(input)
+    
+
+  })
+
+  input.addEventListener('focus', () => {
+
+
+    highlightSelectedCells(input)
+
+  })
 
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -502,6 +520,7 @@ function useCell(cell) {
       e.preventDefault()
       return input.blur()
     }
+
   }
   )
 }
@@ -518,7 +537,33 @@ function handleError(cb, err = '') {
   }
 }
 
-$("p[contenteditable]").addEventListener('keydown', ({key, preventDefault}) => {
+function highlightSelectedCells({value}){
+  $$('.cell:has(div.selected) .selected').forEach( selected => selected.classList.remove('selected'))
+
+  if (value.startsWith('=')) {
+    
+    
+    let cellsImplied = []
+    
+    let ranges = splitRanges(value)
+    
+    ranges.forEach(range => {
+      let rangeCells = getRange(range)
+      value = value.replace(range, rangeCells)
+    })
+    
+    cellsImplied = splitConstants(value)
+    
+    cellsImplied.map( address => {
+      STATE[address].render.classList.add('selected')
+    })
+}
+  
+}
+
+
+
+$("p[contenteditable]").addEventListener('keydown', ({key}) => {
   if (key == "Enter") {
     $("p[contenteditable]").blur()
   }
