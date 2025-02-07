@@ -76,7 +76,7 @@ function LOWER(value) {
   return value.toLowerCase()
 }
 
-function CONCAT(...args){
+function CONCAT(...args) {
   return args.join('')
 }
 
@@ -159,7 +159,7 @@ class Cell {
         this.computed = nullFnError.message
         this.renderValue(this.computed, true)
         return
-        
+
       }
 
       let [refError, b = value] = handleError(() => {
@@ -173,7 +173,7 @@ class Cell {
         this.renderValue(this.computed, true)
         return
       }
-      
+
       let ranges = splitRanges(fn)
 
       ranges.forEach(range => {
@@ -197,7 +197,7 @@ class Cell {
 
 
 
-      
+
       let [syntaxError, c = value] = handleError(() => {
         let fn_wrapper = new Function('', `
           ${constants}
@@ -210,7 +210,7 @@ class Cell {
         this.computed = syntaxError.message
         this.renderValue(this.computed, true)
         return
-      }else{
+      } else {
 
         if (typeof c == "number" && Number.isNaN(c)) {
           let nanError = new Error(ERRORS.NAN.code)
@@ -260,7 +260,7 @@ class Cell {
 
   }
 
-  renderValue(value = '', error = false){
+  renderValue(value = '', error = false) {
     if (error) {
       this.render.classList.add('error')
       this.render.setAttribute('title', ERRORS[value.substring(1)].message)
@@ -281,6 +281,12 @@ const COLS = 26
 
 cell_group.setAttribute('style', `--columns : ${COLS}; --rows : ${ROWS}`)
 
+const MOUSE = {
+  firstCell: null,
+  lastCell: null,
+  isHolding: false
+}
+
 
 // Event-Listeners
 
@@ -296,23 +302,104 @@ cell_group.addEventListener('dblclick', ({ target }) => {
 
 cell_group.addEventListener('click', ({ target }) => {
 
+
   $$('.cell div.focus').forEach(div => div.classList.remove('focus'))
 
   const cell = target.closest('.cell')
 
   if (!cell) return
 
+  $$('.cell:has(div.selected) .selected').forEach(selected => selected.classList.remove('selected'))
+
+
   const computed = _$(cell, 'div')
-  
-  if (![...getErrorsCode(), ''].includes(computed.textContent.trim())){
+
+  if (![...getErrorsCode(), ''].includes(computed.textContent.trim())) {
     computed.classList.add('focus')
     return
   }
-  
+
   return useCell(cell)
 
 }
 )
+
+cell_group.addEventListener('mousedown', ({ target }) => {
+  const cell = target.closest('.cell')
+
+  if (!cell) return
+
+
+  MOUSE.isHolding = true
+  MOUSE.firstCell = cell
+  MOUSE.lastCell = null
+
+})
+
+cell_group.addEventListener('mousemove', ({ target }) => {
+  const cell = target.closest('.cell')
+
+  if (!cell || !MOUSE.isHolding) return
+
+
+  MOUSE.lastCell = cell
+
+
+  const { address: firstAddress } = MOUSE.firstCell.dataset
+  const { address: lastAddress } = MOUSE.lastCell.dataset
+
+
+  const range = {}
+  range.value = `=${firstAddress}:${lastAddress}`
+
+  highlightSelectedCells(range)
+
+
+
+
+
+})
+
+
+column_count.addEventListener('click', ({ target }) => {
+
+  $$('.row.selected').forEach(selected => selected.classList.remove('selected'))
+  $$('.column.selected').forEach(selected => selected.classList.remove('selected'))
+
+  const { col } = target.dataset
+  target.classList.add('selected')
+
+  const letter = getLetter(Number(col))
+
+  let range = {}
+
+  range.value = `=${letter}1:${letter}${ROWS}`
+
+  highlightSelectedCells(range)
+})
+
+row_count.addEventListener('click', ({ target }) => {
+
+  $$('.row.selected').forEach(selected => selected.classList.remove('selected'))
+  $$('.column.selected').forEach(selected => selected.classList.remove('selected'))
+
+
+  const { row } = target.dataset
+  target.classList.add('selected')
+
+  let range = {}
+
+  range.value = `=${getLetter(0)}${+row + 1}:${getLetter(COLS - 1)}${+row + 1}`
+
+  highlightSelectedCells(range)
+})
+
+
+document.addEventListener('mouseup', () => {
+  MOUSE.isHolding = false
+  MOUSE.firstCell = null
+  MOUSE.lastCell = null
+})
 
 document.addEventListener('keydown', (e) => {
 
@@ -352,12 +439,13 @@ document.addEventListener('focusin', ({ target }) => {
   if (target.tagName === 'INPUT') {
     const cell = target.closest('.cell')
     if (!cell) return
-    
+
     useCell(cell)
   }
 })
 
-$("p[contenteditable]").addEventListener('keydown', ({key}) => {
+
+$("p[contenteditable]").addEventListener('keydown', ({ key }) => {
   if (key == "Enter") {
     $("p[contenteditable]").blur()
   }
@@ -486,6 +574,10 @@ function splitRanges(operation = '') {
 function useCell(cell) {
   const input = _$(cell, 'input')
 
+  $$('.row.selected').forEach(selected => selected.classList.remove('selected'))
+  $$('.column.selected').forEach(selected => selected.classList.remove('selected'))
+
+
   const { col, row, address } = cell.dataset
 
 
@@ -500,8 +592,9 @@ function useCell(cell) {
   row_selected.classList.add('selected')
 
   input.addEventListener('blur', () => {
+    $$('.cell div.focus').forEach(div => div.classList.remove('focus'))
     let cell = STATE[address]
-    $$('.cell:has(div.selected) .selected').forEach( selected => selected.classList.remove('selected'))
+    $$('.cell:has(div.selected) .selected').forEach(selected => selected.classList.remove('selected'))
 
 
     column_selected.classList.remove('selected')
@@ -515,7 +608,7 @@ function useCell(cell) {
     cell.classList.toggle('writing-function', input.value.startsWith('='))
 
     highlightSelectedCells(input)
-    
+
 
   })
 
@@ -529,14 +622,14 @@ function useCell(cell) {
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault()
-      
+
       let belowCell = $(`.cell[data-row="${Number(row) + 1}"][data-col="${col}"]`)
       if (!belowCell)
         return input.blur()
-      
+
       return useCell(belowCell)
     }
-    
+
     if (e.key === 'Escape') {
       e.preventDefault()
       return input.blur()
@@ -546,35 +639,35 @@ function useCell(cell) {
   )
 }
 
-function highlightSelectedCells({value}){
-  $$('.cell:has(div.selected) .selected').forEach( selected => selected.classList.remove('selected'))
+function highlightSelectedCells({ value }) {
+  $$('.cell:has(div.selected) .selected').forEach(selected => selected.classList.remove('selected'))
 
   if (value.startsWith('=')) {
-    
-    
+
+
     let cellsImplied = []
-    
+
     let ranges = splitRanges(value)
-    
+
     ranges.forEach(range => {
       let rangeCells = getRange(range)
       value = value.replace(range, rangeCells)
     })
-    
+
     cellsImplied = splitConstants(value)
-    
-    cellsImplied.map( address => {
+
+    cellsImplied.map(address => {
       STATE[address].render.classList.add('selected')
     })
-}
-  
+  }
+
 }
 
 
 function handleError(cb, err = '') {
   try {
     return [null, cb()]
-  } catch(e) {
+  } catch (e) {
     return [new Error(err), null]
   }
 }
