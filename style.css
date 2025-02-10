@@ -149,6 +149,12 @@ header{
   background-color: var(--clr-white-000);
   color: var(--clr-black-900);
   width: max(100vw - 12px / 2, 600px);
+  height: 128px;
+
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 3;
 
   .principal-icon{
 
@@ -402,8 +408,8 @@ main{
   grid-row: column-count;
   display: flex;
   position: sticky;
-  top: 0;
-  z-index: 2;
+  top: 128px;
+  z-index: 3;
   
   > .column{
     background-color: var(--clr-white-000);
@@ -426,7 +432,6 @@ main{
   grid-column: row-count;
   position: sticky;
   left: 0;
-  z-index: 2;
 
 
   > .row{

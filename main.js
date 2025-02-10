@@ -608,7 +608,7 @@ function useCell(cell) {
     row_selected.classList.remove('selected')
 
     selected_cell_input.value = ''
-    cell_value_input.value = input.value
+    cell_value_input.value = ''
 
 
 
