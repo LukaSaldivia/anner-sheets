@@ -355,9 +355,9 @@ cell_group.addEventListener('mousemove', ({ target }) => {
 
 
   const range = {}
-  range.value = `=${firstAddress}:${lastAddress}`
+  range.value = lastAddress != firstAddress ? `=${firstAddress}:${lastAddress}` : `=${firstAddress}`
 
-  selected_cell_input.value = `${firstAddress}:${lastAddress}`
+  selected_cell_input.value = lastAddress != firstAddress ? `${firstAddress}:${lastAddress}` : `${firstAddress}`
 
   highlightSelectedCells(range)
 
@@ -449,6 +449,14 @@ document.addEventListener('focusin', ({ target }) => {
 
     useCell(cell)
   }
+})
+
+document.addEventListener('click', ({ target }) => {
+  const cell = target.closest('.cell')
+  
+  if (cell || target == cell_value_input || target.closest('button')) return
+
+  cell_value_input.value = ''
 })
 
 
