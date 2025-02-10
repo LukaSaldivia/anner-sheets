@@ -483,6 +483,7 @@ $("p[contenteditable]").addEventListener('keydown', ({ key }) => {
 {
 cell_value_input.addEventListener('focus', () => {
   _$(last_focused_cell, 'input').classList.add('focus-force')
+  cell_value_input_aux = cell_value_input.value
   highlightSelectedCells(cell_value_input)
 })
 

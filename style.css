@@ -133,6 +133,8 @@ body{
 
   display: grid;
 
+  overflow: scroll;
+
 }
 
 header{
