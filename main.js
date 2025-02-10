@@ -275,6 +275,8 @@ class Cell {
 const cell_group = $('.cell-group')
 const column_count = $('.column-count')
 const row_count = $('.row-count')
+const selected_cell_input = $('.selected-cell')
+const cell_value_input = $('.cell-value')
 
 const ROWS = 100
 const COLS = 26
@@ -351,6 +353,8 @@ cell_group.addEventListener('mousemove', ({ target }) => {
 
   const range = {}
   range.value = `=${firstAddress}:${lastAddress}`
+
+  selected_cell_input.value = `${firstAddress}:${lastAddress}`
 
   highlightSelectedCells(range)
 
@@ -591,6 +595,9 @@ function useCell(cell) {
   column_selected.classList.add('selected')
   row_selected.classList.add('selected')
 
+  selected_cell_input.value = address
+  cell_value_input.value = input.value
+
   input.addEventListener('blur', () => {
     $$('.cell div.focus').forEach(div => div.classList.remove('focus'))
     let cell = STATE[address]
@@ -599,6 +606,11 @@ function useCell(cell) {
 
     column_selected.classList.remove('selected')
     row_selected.classList.remove('selected')
+
+    selected_cell_input.value = ''
+    cell_value_input.value = input.value
+
+
 
     cell.updateValue(input.value)
 
@@ -639,10 +651,10 @@ function useCell(cell) {
   )
 }
 
-function highlightSelectedCells({ value }) {
+function highlightSelectedCells({ value }, force = false) {
   $$('.cell:has(div.selected) .selected').forEach(selected => selected.classList.remove('selected'))
 
-  if (value.startsWith('=')) {
+  if (value.startsWith('=') || force) {
 
 
     let cellsImplied = []

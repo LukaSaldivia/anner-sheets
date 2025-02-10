@@ -230,6 +230,10 @@ header{
       }
     }
 
+    input.selected-cell{
+      text-align: center;
+    }
+
     div:has(.cell-value) {
 
     .line{
@@ -310,7 +314,7 @@ main{
       border: none;
       pointer-events: none;
   
-      &:focus{
+      &:focus,&.focus-force{
         opacity: 1;
         outline: 2px solid var(--clr-accent);
         background-color: var(--clr-white-000);
