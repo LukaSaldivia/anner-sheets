@@ -79,6 +79,18 @@ svg {
   display: block;
 }
 
+svg.icon{
+  width: 20px;
+
+  &.stroke{
+    stroke: currentColor;
+  }
+
+  &.fill{
+    fill: currentColor;
+  }
+}
+
 
 .stack{
   display: grid;
@@ -124,25 +136,33 @@ body{
 }
 
 header{
+  display: grid;
 
+  grid-template-columns: [icon-start utility-start] 40px [icon-end content-start] auto [content-end utility-end];
+  grid-template-rows: repeat(2, auto);
 
-  display: flex;
-  align-items: center;
+  align-items: start;
+  justify-items: start;
 
-  gap: 2px;
+  gap: 12px;
   padding: 12px;
   background-color: var(--clr-white-000);
   color: var(--clr-black-900);
-  height: 75px;
+  width: max(100vw - 12px / 2, 600px);
 
   .principal-icon{
 
     fill: var(--clr-primary);
     width: 40px;
+    grid-column: icon;
+    grid-row: 1;
+    align-self: center;
   
   }
 
   .content{
+    grid-column: content;
+    grid-row: 1;
     display: grid;
     align-items: center;
     justify-items: start;
@@ -173,16 +193,6 @@ header{
         display: flex;
         color: var(--clr-black-500);
         gap: 12px;
-        svg{
-          width: 20px;
-        }
-        .stroke{
-          stroke: currentColor;
-        }
-
-        .fill{
-          fill: currentColor;
-        }
       }
     }
 
@@ -190,6 +200,69 @@ header{
       padding-left: 4px;
     }
 
+  }
+
+  .utility{
+    grid-column: utility;
+    grid-row: 2;
+
+    width: 100%;
+
+    background-color: var(--clr-white-100);
+    border-radius: 10px;
+    padding: 6px;
+
+    display: grid;
+    grid-template-columns: 75px 1fr;
+    gap: 8px;
+
+    input{
+      width: 100%;
+      border: none;
+      border-radius: 4px;
+      padding-block: 4px;
+      padding-inline: 8px;
+      border: 1px solid var(--clr-white-200);
+
+      &:focus, &:focus-within{
+        border-color: var(--clr-accent);
+        outline: none;
+      }
+    }
+
+    div:has(.cell-value) {
+
+    .line{
+      justify-self: start;
+      margin-left: calc(10px + 10px + 15px);
+      color: var(--clr-white-200);
+      }
+
+    button{
+      justify-self: start;
+      background: none;
+      border: none;
+      padding-inline: 10px;
+      height: 100%;
+      cursor: pointer;
+      border-radius: 4px;
+
+      &:hover, &:focus-visible{
+        background-color: #0012;
+      }
+        
+      svg{
+        color: var(--clr-black-500);
+      }
+    }
+
+    input.cell-value{
+      padding-left: 50px;
+    }
+
+
+
+    }
   }
 }
 
