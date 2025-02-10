@@ -295,6 +295,9 @@ const MOUSE = {
 
 // Event-Listeners
 
+
+// cell_group
+{
 cell_group.addEventListener('dblclick', ({ target }) => {
 
   const cell = target.closest('.cell')
@@ -314,7 +317,7 @@ cell_group.addEventListener('click', ({ target }) => {
 
   if (!cell) return
 
-  $$('.cell:has(div.selected) .selected').forEach(selected => selected.classList.remove('selected'))
+  unhighlightSelectedCells()
 
 
   const computed = _$(cell, 'div')
@@ -366,8 +369,10 @@ cell_group.addEventListener('mousemove', ({ target }) => {
 
 
 })
+}
 
-
+// column_count
+{
 column_count.addEventListener('click', ({ target }) => {
 
   $$('.row.selected').forEach(selected => selected.classList.remove('selected'))
@@ -384,7 +389,10 @@ column_count.addEventListener('click', ({ target }) => {
 
   highlightSelectedCells(range)
 })
+}
 
+// row_count
+{
 row_count.addEventListener('click', ({ target }) => {
 
   $$('.row.selected').forEach(selected => selected.classList.remove('selected'))
@@ -400,8 +408,10 @@ row_count.addEventListener('click', ({ target }) => {
 
   highlightSelectedCells(range)
 })
+}
 
-
+// document
+{
 document.addEventListener('mouseup', () => {
   MOUSE.isHolding = false
   MOUSE.firstCell = null
@@ -456,32 +466,47 @@ document.addEventListener('click', ({ target }) => {
   
   if (cell || target == cell_value_input || target.closest('button')) return
 
-  cell_value_input.value = ''
+  syncValue(cell_value_input, '')
 })
+}
 
-
+// p[contenteditable]
+{
 $("p[contenteditable]").addEventListener('keydown', ({ key }) => {
   if (key == "Enter") {
     $("p[contenteditable]").blur()
   }
 })
+}
 
-
+// cell_value_input
+{
 cell_value_input.addEventListener('focus', () => {
   _$(last_focused_cell, 'input').classList.add('focus-force')
   highlightSelectedCells(cell_value_input)
 })
 
 cell_value_input.addEventListener('input', () => {
-  _$(last_focused_cell, 'input').value = cell_value_input.value
+  let input = _$(last_focused_cell, 'input')
+  syncValue(input,cell_value_input.value)
   cell_value_input_aux = cell_value_input.value
+  last_focused_cell.classList.toggle('writing-function', input.value.startsWith('='))
+
   highlightSelectedCells(cell_value_input)
 })
 
 cell_value_input.addEventListener('blur', () => {
-  _$(last_focused_cell, 'input').classList.remove('focus-force')
-  cell_value_input.value = ''
-  $$('.cell:has(div.selected) .selected').forEach(selected => selected.classList.remove('selected'))
+  let input = _$(last_focused_cell, 'input')
+  input.classList.remove('focus-force')
+  syncValue(cell_value_input, '')
+
+  const { address } = last_focused_cell.dataset
+
+  let cellRef = STATE[address]
+  
+  cellRef.updateValue(cell_value_input_aux)
+
+  unhighlightSelectedCells()
 
 
 })
@@ -489,18 +514,22 @@ cell_value_input.addEventListener('blur', () => {
 cell_value_input.addEventListener('keydown', ({ key }) => {
   if (key == "Enter") {
     cell_value_input.blur()
-
-    const { address } = last_focused_cell.dataset
-
-    let cellRef = STATE[address]
-    
-    cellRef.updateValue(cell_value_input_aux)
-
-    
   }
-}, {
-  capture : true
 })
+}
+
+// selected_cell_input
+{
+  selected_cell_input.addEventListener('input', () => {
+    let { value } = selected_cell_input
+
+    let user = {}
+
+    user.value = `=${value}`
+
+    highlightSelectedCells(user)
+  })
+}
 
 
 // Sheet creation
@@ -571,6 +600,7 @@ function getCellsAsConstants(cells = []) {
   return cells.map(cell => `const ${cell} = ${STATE[cell].getComputed()};`).join('')
 }
 
+// RE-DO
 function getRange(range = '') {
   const [start, end] = range.split(':')
 
@@ -642,19 +672,19 @@ function useCell(cell) {
   column_selected.classList.add('selected')
   row_selected.classList.add('selected')
 
-  selected_cell_input.value = address
-  cell_value_input.value = input.value
+  syncValue(selected_cell_input, address)
+  syncValue(cell_value_input, input.value)
 
   input.addEventListener('blur', () => {
     $$('.cell div.focus').forEach(div => div.classList.remove('focus'))
     let cellRef = STATE[address]
-    $$('.cell:has(div.selected) .selected').forEach(selected => selected.classList.remove('selected'))
+    unhighlightSelectedCells()
 
 
     column_selected.classList.remove('selected')
     row_selected.classList.remove('selected')
 
-    selected_cell_input.value = ''
+    syncValue(selected_cell_input, '')
 
     last_focused_cell = cell
 
@@ -666,7 +696,7 @@ function useCell(cell) {
   input.addEventListener('input', () => {
     cell.classList.toggle('writing-function', input.value.startsWith('='))
 
-    cell_value_input.value = input.value
+    syncValue(cell_value_input, input.value)
 
     highlightSelectedCells(input)
 
@@ -698,7 +728,7 @@ function useCell(cell) {
 }
 
 function highlightSelectedCells({ value }) {
-  $$('.cell:has(div.selected) .selected').forEach(selected => selected.classList.remove('selected'))
+  unhighlightSelectedCells()
 
   if (value.startsWith('=')) {
 
@@ -719,6 +749,14 @@ function highlightSelectedCells({ value }) {
     })
   }
 
+}
+
+function unhighlightSelectedCells(){
+  $$('.cell:has(div.selected) .selected').forEach(selected => selected.classList.remove('selected'))
+}
+
+function syncValue(destination, data){
+  destination.value = data
 }
 
 
