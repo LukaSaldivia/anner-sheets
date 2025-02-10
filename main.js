@@ -277,9 +277,12 @@ const column_count = $('.column-count')
 const row_count = $('.row-count')
 const selected_cell_input = $('.selected-cell')
 const cell_value_input = $('.cell-value')
+let cell_value_input_aux = ''
 
 const ROWS = 100
 const COLS = 26
+
+let last_focused_cell = null
 
 cell_group.setAttribute('style', `--columns : ${COLS}; --rows : ${ROWS}`)
 
@@ -456,6 +459,42 @@ $("p[contenteditable]").addEventListener('keydown', ({ key }) => {
 })
 
 
+cell_value_input.addEventListener('focus', () => {
+  _$(last_focused_cell, 'input').classList.add('focus-force')
+  highlightSelectedCells(cell_value_input)
+})
+
+cell_value_input.addEventListener('input', () => {
+  _$(last_focused_cell, 'input').value = cell_value_input.value
+  cell_value_input_aux = cell_value_input.value
+  highlightSelectedCells(cell_value_input)
+})
+
+cell_value_input.addEventListener('blur', () => {
+  _$(last_focused_cell, 'input').classList.remove('focus-force')
+  cell_value_input.value = ''
+  $$('.cell:has(div.selected) .selected').forEach(selected => selected.classList.remove('selected'))
+
+
+})
+
+cell_value_input.addEventListener('keydown', ({ key }) => {
+  if (key == "Enter") {
+    cell_value_input.blur()
+
+    const { address } = last_focused_cell.dataset
+
+    let cellRef = STATE[address]
+    
+    cellRef.updateValue(cell_value_input_aux)
+
+    
+  }
+}, {
+  capture : true
+})
+
+
 // Sheet creation
 
 range(ROWS, (row) => {
@@ -600,7 +639,7 @@ function useCell(cell) {
 
   input.addEventListener('blur', () => {
     $$('.cell div.focus').forEach(div => div.classList.remove('focus'))
-    let cell = STATE[address]
+    let cellRef = STATE[address]
     $$('.cell:has(div.selected) .selected').forEach(selected => selected.classList.remove('selected'))
 
 
@@ -608,16 +647,18 @@ function useCell(cell) {
     row_selected.classList.remove('selected')
 
     selected_cell_input.value = ''
-    cell_value_input.value = ''
+
+    last_focused_cell = cell
 
 
-
-    cell.updateValue(input.value)
+    cellRef.updateValue(input.value)
 
   }, { once: true })
 
   input.addEventListener('input', () => {
     cell.classList.toggle('writing-function', input.value.startsWith('='))
+
+    cell_value_input.value = input.value
 
     highlightSelectedCells(input)
 
@@ -625,10 +666,7 @@ function useCell(cell) {
   })
 
   input.addEventListener('focus', () => {
-
-
     highlightSelectedCells(input)
-
   })
 
   input.addEventListener('keydown', (e) => {
@@ -651,10 +689,10 @@ function useCell(cell) {
   )
 }
 
-function highlightSelectedCells({ value }, force = false) {
+function highlightSelectedCells({ value }) {
   $$('.cell:has(div.selected) .selected').forEach(selected => selected.classList.remove('selected'))
 
-  if (value.startsWith('=') || force) {
+  if (value.startsWith('=')) {
 
 
     let cellsImplied = []
