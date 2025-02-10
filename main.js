@@ -706,7 +706,7 @@ function useCell(cell) {
 
   input.addEventListener('focus', () => {
     highlightSelectedCells(input)
-  })
+  }, { once : true })
 
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
