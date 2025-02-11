@@ -296,6 +296,10 @@ main{
     border-left: none;
   }
 
+  &:not(:has(.cell-group .cell))::before{
+    content: none;
+  }
+
 }
 
 .cell-group{
