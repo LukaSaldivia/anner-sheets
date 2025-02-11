@@ -277,6 +277,7 @@ const column_count = $('.column-count')
 const row_count = $('.row-count')
 const selected_cell_input = $('.selected-cell')
 const cell_value_input = $('.cell-value')
+const contextmenu = $('.contextmenu')
 let cell_value_input_aux = ''
 
 const ROWS = 100
@@ -368,6 +369,13 @@ cell_group.addEventListener('mousemove', ({ target }) => {
 
 
 
+})
+
+cell_group.addEventListener('contextmenu', (e) => {
+  e.preventDefault()
+
+  const { clientX: x, clientY : y } = e
+  contextmenu.setAttribute('style', `--_x: ${x}px; --_y: ${y}px`)
 })
 }
 
@@ -461,12 +469,9 @@ document.addEventListener('focusin', ({ target }) => {
   }
 })
 
-document.addEventListener('click', ({ target }) => {
-  const cell = target.closest('.cell')
-  
-  if (cell || target == cell_value_input || target.closest('button')) return
-
+document.addEventListener('click', () => {  
   syncValue(cell_value_input, '')
+  contextmenu.setAttribute('style', `--_x: -100%; --_y: -100%`)
 })
 }
 
@@ -551,6 +556,8 @@ range(ROWS, (row) => {
     cell_group.appendChild(cell)
   })
 })
+
+last_focused_cell = $('.cell[data-address="A1"]')
 
 // Cells creation
 

@@ -86,8 +86,16 @@ svg.icon{
     stroke: currentColor;
   }
 
+  &.strokable{
+    stroke: var(--_clr);
+  }
+
   &.fill{
     fill: currentColor;
+  }
+
+  &.fillable{
+    fill: var(--_clr);
   }
 }
 
@@ -459,3 +467,40 @@ main{
   background-color: var(--clr-white-200);
 }
 
+.contextmenu{
+  display: grid;
+  position: absolute;
+  border-radius: 10px;
+  border-top-left-radius: 0;
+  overflow: hidden;
+
+  translate: var(--_x, -100%) var(--_y, -100%);
+
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 13px 27px -5px, rgba(0, 0, 0, 0.3) 0px 8px 16px -8px;
+
+  button{
+    width: 100%;
+    display: grid;
+    padding: 8px;
+    padding-right: 24px;
+    border: none;
+    background-color: var(--clr-white-100);
+
+    grid-template-columns: 20px auto;
+    gap: 10px;
+
+    p{
+      text-align: start;
+      grid-column: 2;
+    }
+
+    &:hover{
+      background-color: var(--clr-white-200);
+    }
+
+    &:nth-child(4){
+      border-top: 1px solid var(--clr-white-200);
+    }
+  }
+
+}
