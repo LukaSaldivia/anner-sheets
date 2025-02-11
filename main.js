@@ -601,7 +601,6 @@ function getCellsAsConstants(cells = []) {
   return cells.map(cell => `const ${cell} = ${STATE[cell].getComputed()};`).join('')
 }
 
-// RE-DO
 function getRange(range = '') {
   const [start, end] = range.split(':')
 
@@ -611,19 +610,25 @@ function getRange(range = '') {
   const startColIndex = getNumber(startCol)
   const endColIndex = getNumber(endCol)
 
+  const minCol = Math.min(startColIndex, endColIndex)
+  const maxCol = startColIndex + endColIndex - minCol
+
 
   const startRowIndex = Number(startRow) - 1
   const endRowIndex = Number(endRow) - 1
 
-  const area = (endColIndex - startColIndex + 1) * (endRowIndex - startRowIndex + 1)
+  const minRow = Math.min(startRowIndex, endRowIndex)
+  const maxRow = startRowIndex + endRowIndex - minRow
+
+  const area = (maxCol - minCol + 1) * (maxRow - minRow + 1)
 
 
 
   const rangeCells = {}
 
   for (let i = 0; i < area; i++) {
-    let row = Math.floor(i / (endColIndex - startColIndex + 1)) + startRowIndex
-    let col = i % (endColIndex - startColIndex + 1) + startColIndex
+    let row = Math.floor(i / (maxCol - minCol + 1)) + minRow
+    let col = i % (maxCol - minCol + 1) + minCol
 
     rangeCells[`${getLetter(col)}${row + 1}`] = 1
   }
