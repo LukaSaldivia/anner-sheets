@@ -87,7 +87,7 @@ svg.icon{
   }
 
   &.strokable{
-    stroke: var(--_clr);
+    stroke: var(--_clr, #fff);
   }
 
   &.fill{
@@ -95,7 +95,7 @@ svg.icon{
   }
 
   &.fillable{
-    fill: var(--_clr);
+    fill: var(--_clr, #fff);
   }
 }
 
@@ -404,11 +404,12 @@ main{
       }
     }
 
-    &:has(div.selected) .selected{
+    &:has(div.selected) {
 
         background-color: #fff16e;
         background-size: 5px 5px;
         background-image: repeating-linear-gradient(45deg, #f3eca8 0, #f3eca8 1px, #fff16e 0, #fff16e 50%);   
+        border: 1px solid;
         border-color: #ffe135;   
     }
   
@@ -477,6 +478,8 @@ main{
   translate: var(--_x, -100%) var(--_y, -100%);
 
   box-shadow: rgba(50, 50, 93, 0.25) 0px 13px 27px -5px, rgba(0, 0, 0, 0.3) 0px 8px 16px -8px;
+
+  z-index: 3;
 
   button{
     width: 100%;

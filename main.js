@@ -311,9 +311,6 @@ cell_group.addEventListener('dblclick', ({ target }) => {
 
 cell_group.addEventListener('click', ({ target }) => {
 
-
-  $$('.cell div.focus').forEach(div => div.classList.remove('focus'))
-
   const cell = target.closest('.cell')
 
   if (!cell) return
@@ -374,8 +371,24 @@ cell_group.addEventListener('mousemove', ({ target }) => {
 cell_group.addEventListener('contextmenu', (e) => {
   e.preventDefault()
 
+  _$(last_focused_cell, 'input').classList.remove('focus-force')
+
   const { clientX: x, clientY : y } = e
   contextmenu.setAttribute('style', `--_x: ${x}px; --_y: ${y}px`)
+
+  const cell = e.target.closest('.cell')
+
+  if(!cell) return
+
+  last_focused_cell = cell
+
+  _$(cell, 'input').classList.add('focus-force')
+
+  _$$(contextmenu, '.fillable').forEach(icon => {
+    const { source } = icon.dataset
+    const div = _$(cell, 'div')
+    icon.setAttribute('style', `--_clr : ${window.getComputedStyle(div)[source]}`)
+  })
 })
 }
 
@@ -537,6 +550,13 @@ cell_value_input.addEventListener('keydown', ({ key }) => {
   })
 }
 
+// contextmenu
+{
+  contextmenu.addEventListener('click', ({ target }) => {
+    const { action } = target.closest('button').dataset
+  })
+}
+
 
 // Sheet creation
 
@@ -666,6 +686,10 @@ function splitRanges(operation = '') {
 
 
 function useCell(cell) {
+  _$(last_focused_cell, 'div.focus')?.classList.remove('focus')
+  _$(last_focused_cell, 'input.focus-force')?.classList.remove('focus-force')
+  last_focused_cell = cell
+
   const input = _$(cell, 'input')
 
   $$('.row.selected').forEach(selected => selected.classList.remove('selected'))
@@ -687,6 +711,7 @@ function useCell(cell) {
 
   syncValue(selected_cell_input, address)
   syncValue(cell_value_input, input.value)
+
 
   input.addEventListener('blur', () => {
     $$('.cell div.focus').forEach(div => div.classList.remove('focus'))
