@@ -235,7 +235,7 @@ class Cell {
 
   }
 
-  getComputed() {
+  getComputed(includeQuotationMark = true) {
     let res = this.computed
     try {
       let cast = Number(res)
@@ -244,7 +244,7 @@ class Cell {
       }
       res = cast
     } catch (error) {
-      res = `"${this.computed}"`
+      res = includeQuotationMark ? `"${this.computed}"` : this.computed
     }
 
     return res
@@ -279,9 +279,41 @@ const selected_cell_input = $('.selected-cell')
 const cell_value_input = $('.cell-value')
 const contextmenu = $('.contextmenu')
 let cell_value_input_aux = ''
+let copy_value
 
 const ROWS = 100
 const COLS = 26
+
+const contextmenuActions = {
+  'copy' : (cell) => {
+    const { address } = cell.dataset
+
+    let cellRef = STATE[address]
+
+    copy_value = cellRef.getComputed(false)
+  },
+  'special-copy' : (cell) => {
+    const { address } = cell.dataset
+
+    let cellRef = STATE[address]
+
+    copy_value = cellRef.value
+  },
+  'paste' : (cell) => {
+    const { address } = cell.dataset
+
+    let cellRef = STATE[address]
+
+    let input = _$(cell, 'input')
+
+    syncValue(input , copy_value)
+
+    cellRef.updateValue(copy_value)
+    input.classList.remove('focus-force')
+  },
+
+
+}
 
 let last_focused_cell = null
 
@@ -554,6 +586,8 @@ cell_value_input.addEventListener('keydown', ({ key }) => {
 {
   contextmenu.addEventListener('click', ({ target }) => {
     const { action } = target.closest('button').dataset
+
+    contextmenuActions[action](last_focused_cell)
   })
 }
 
@@ -686,7 +720,7 @@ function splitRanges(operation = '') {
 
 
 function useCell(cell) {
-  _$(last_focused_cell, 'div.focus')?.classList.remove('focus')
+  $$('.cell div.focus').forEach(div => div.classList.remove('focus'))
   _$(last_focused_cell, 'input.focus-force')?.classList.remove('focus-force')
   last_focused_cell = cell
 
