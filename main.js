@@ -291,6 +291,7 @@ const contextmenuActions = {
     let cellRef = STATE[address]
 
     copy_value = cellRef.getComputed(false)
+    navigator.clipboard.writeText(cellRef.getComputed(false))
   },
   'special-copy' : (cell) => {
     const { address } = cell.dataset
@@ -298,6 +299,7 @@ const contextmenuActions = {
     let cellRef = STATE[address]
 
     copy_value = cellRef.value
+    navigator.clipboard.writeText(cellRef.value)
   },
   'paste' : (cell) => {
     const { address } = cell.dataset
