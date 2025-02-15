@@ -278,6 +278,7 @@ const row_count = $('.row-count')
 const selected_cell_input = $('.selected-cell')
 const cell_value_input = $('.cell-value')
 const contextmenu = $('.contextmenu')
+const contextmenu_colors = $('.contextmenu-colors')
 let cell_value_input_aux = ''
 let copy_value
 
@@ -285,6 +286,7 @@ const ROWS = 100
 const COLS = 26
 
 const contextmenuActions = {
+  
   'copy' : (cell) => {
     const { address } = cell.dataset
 
@@ -293,6 +295,7 @@ const contextmenuActions = {
     copy_value = cellRef.getComputed(false)
     navigator.clipboard.writeText(cellRef.getComputed(false))
   },
+
   'special-copy' : (cell) => {
     const { address } = cell.dataset
 
@@ -301,6 +304,7 @@ const contextmenuActions = {
     copy_value = cellRef.value
     navigator.clipboard.writeText(cellRef.value)
   },
+
   'paste' : (cell) => {
     const { address } = cell.dataset
 
@@ -313,6 +317,19 @@ const contextmenuActions = {
     cellRef.updateValue(copy_value)
     input.classList.remove('focus-force')
   },
+
+  'bkg-color' : (cell) => {
+
+    const { left : x, bottom : y } = cell.getBoundingClientRect()
+
+    contextmenu_colors.setAttribute('style', `--_x: ${ x }px; --_y: ${y}px`)
+
+
+  },
+
+  'txt-color' : (cell) => {
+
+  }
 
 
 }
@@ -409,12 +426,13 @@ cell_group.addEventListener('contextmenu', (e) => {
 
   const { clientX: x, clientY : y } = e
   contextmenu.setAttribute('style', `--_x: ${x}px; --_y: ${y}px`)
-
+  
   const cell = e.target.closest('.cell')
 
   if(!cell) return
 
   last_focused_cell = cell
+  
 
   _$(cell, 'input').classList.add('focus-force')
 
