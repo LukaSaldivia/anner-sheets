@@ -279,6 +279,10 @@ const selected_cell_input = $('.selected-cell')
 const cell_value_input = $('.cell-value')
 const contextmenu = $('.contextmenu')
 const contextmenu_colors = $('.contextmenu-colors')
+
+let activated_contextmenucolors = false
+let source_contextmenucolors
+
 let cell_value_input_aux = ''
 let copy_value
 
@@ -324,10 +328,19 @@ const contextmenuActions = {
 
     contextmenu_colors.setAttribute('style', `--_x: ${ x }px; --_y: ${y}px`)
 
-
+    source_contextmenucolors = 'backgroundColor'
+    activated_contextmenucolors = true
+    
   },
-
+  
   'txt-color' : (cell) => {
+    
+    const { left : x, bottom : y } = cell.getBoundingClientRect()
+    
+    contextmenu_colors.setAttribute('style', `--_x: ${ x }px; --_y: ${y}px`)
+
+    source_contextmenucolors = 'color'
+    activated_contextmenucolors = true
 
   }
 
@@ -421,6 +434,9 @@ cell_group.addEventListener('mousemove', ({ target }) => {
 
 cell_group.addEventListener('contextmenu', (e) => {
   e.preventDefault()
+
+  $$('.cell div.focus').forEach(div => div.classList.remove('focus'))
+
 
   _$(last_focused_cell, 'input').classList.remove('focus-force')
 
@@ -535,8 +551,16 @@ document.addEventListener('focusin', ({ target }) => {
 })
 
 document.addEventListener('click', () => {  
-  syncValue(cell_value_input, '')
   contextmenu.setAttribute('style', `--_x: -100%; --_y: -100%`)
+
+
+  if (activated_contextmenucolors) {
+    activated_contextmenucolors = false
+  }else{
+    contextmenu_colors.setAttribute('style', `--_x: -100%; --_y: -100%`)
+  }
+
+  
 })
 }
 
@@ -608,6 +632,27 @@ cell_value_input.addEventListener('keydown', ({ key }) => {
     const { action } = target.closest('button').dataset
 
     contextmenuActions[action](last_focused_cell)
+  })
+}
+
+// contextmenu_colors
+{
+  contextmenu_colors.addEventListener('click', ({ target }) => {
+    const { value } = target
+    if (!value) return
+
+    let selected_cells = $$('.cell:has(div.selected)')
+
+
+    if (selected_cells.length == 0) {
+      return setCellColor(last_focused_cell, value, source_contextmenucolors)
+    }
+
+    selected_cells.forEach(cell => {
+      setCellColor(cell, value, source_contextmenucolors)
+    })
+
+
   })
 }
 
@@ -858,4 +903,8 @@ function handleError(cb, errCode = '') {
   } catch (e) {
     return [new Error(errCode), null]
   }
+}
+
+function setCellColor(cell = HTMLElement, color, source){
+  cell.style[source] = color
 }

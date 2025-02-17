@@ -322,6 +322,9 @@ main{
 
   > .cell{
 
+    background-color: var(--clr-white-000);
+    color: var(--clr-black-900);
+
     > *{
       max-height: var(--cell-height);
       padding-inline: 8px;
@@ -336,11 +339,12 @@ main{
       opacity: 0;
       border: none;
       pointer-events: none;
+      background-color: inherit;
+      color: inherit;
   
       &:focus,&.focus-force{
         opacity: 1;
         outline: 2px solid var(--clr-accent);
-        background-color: var(--clr-white-000);
         z-index: 2;
       }
     }
@@ -395,7 +399,7 @@ main{
       }
 
       &.focus{
-        background-color: var(--clr-white-100);
+        outline: 1px solid var(--clr-accent);
         z-index: 2;
       }
     }
