@@ -413,11 +413,7 @@ main{
 
     &:has(div.selected) {
 
-        background-color: #fff16e;
-        background-size: 5px 5px;
-        background-image: repeating-linear-gradient(45deg, #f3eca8 0, #f3eca8 1px, #fff16e 0, #fff16e 50%);   
-        border: 1px solid;
-        border-color: #ffe135;   
+      filter: invert(1);
     }
   
   }
