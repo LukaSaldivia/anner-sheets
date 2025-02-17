@@ -333,14 +333,14 @@ main{
       height: var(--cell-height);
       overflow: hidden;
       line-break: anywhere;
+      background-color: inherit;
+      color: inherit;
     }
   
     input{
       opacity: 0;
       border: none;
       pointer-events: none;
-      background-color: inherit;
-      color: inherit;
   
       &:focus,&.focus-force{
         opacity: 1;

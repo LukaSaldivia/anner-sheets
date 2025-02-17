@@ -454,8 +454,7 @@ cell_group.addEventListener('contextmenu', (e) => {
 
   _$$(contextmenu, '.fillable').forEach(icon => {
     const { source } = icon.dataset
-    const div = _$(cell, 'div')
-    icon.setAttribute('style', `--_clr : ${window.getComputedStyle(div)[source]}`)
+    icon.setAttribute('style', `--_clr : ${window.getComputedStyle(cell)[source]}`)
   })
 })
 }
